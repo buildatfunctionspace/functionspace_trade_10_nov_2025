@@ -1,0 +1,1278 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>functionSPACE Trading Protocol - Simulation Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #333;
+            padding: 20px;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+
+        .content {
+            padding: 25px;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .section {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border: 1px solid #dee2e6;
+        }
+
+        .section h2 {
+            color: #667eea;
+            margin-bottom: 15px;
+            font-size: 1.4em;
+            border-bottom: 2px solid #667eea;
+            padding-bottom: 8px;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 600;
+            color: #495057;
+        }
+
+        .form-group input,
+        .form-group textarea {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #dee2e6;
+            border-radius: 6px;
+            font-size: 0.95em;
+            transition: border-color 0.3s;
+        }
+
+        .form-group input:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .form-group textarea {
+            resize: vertical;
+            min-height: 60px;
+            font-family: monospace;
+        }
+
+        button {
+            width: 100%;
+            padding: 12px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        button.secondary {
+            background: #6c757d;
+        }
+
+        button.danger {
+            background: #dc3545;
+        }
+
+        button.small {
+            width: auto;
+            padding: 6px 12px;
+            font-size: 0.85em;
+        }
+
+        .chart-container {
+            position: relative;
+            height: 400px;
+            margin-bottom: 20px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+        }
+
+        table th,
+        table td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #dee2e6;
+        }
+
+        table th {
+            background: #f8f9fa;
+            font-weight: 600;
+            color: #495057;
+            position: sticky;
+            top: 0;
+        }
+
+        table tr:hover {
+            background: #f8f9fa;
+        }
+
+        table td input[type="checkbox"] {
+            width: auto;
+            cursor: pointer;
+            transform: scale(1.3);
+        }
+
+        .status {
+            padding: 8px 15px;
+            border-radius: 6px;
+            margin-bottom: 15px;
+            font-weight: 600;
+        }
+
+        .status.info {
+            background: #d1ecf1;
+            color: #0c5460;
+        }
+
+        .status.success {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .status.warning {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .status.error {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .market-info {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .info-item {
+            background: #f8f9fa;
+            padding: 10px;
+            border-radius: 6px;
+            border-left: 4px solid #667eea;
+        }
+
+        .info-item strong {
+            display: block;
+            color: #667eea;
+            font-size: 0.85em;
+            margin-bottom: 3px;
+        }
+
+        .info-item span {
+            font-size: 1.1em;
+            font-weight: 600;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 20px;
+            color: #667eea;
+        }
+
+        .loading.active {
+            display: block;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .collapsible-header {
+            cursor: pointer;
+            user-select: none;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .collapsible-header:hover {
+            opacity: 0.8;
+        }
+
+        .collapse-icon {
+            transition: transform 0.3s;
+        }
+
+        .collapse-icon.collapsed {
+            transform: rotate(-90deg);
+        }
+
+        .collapsible-content {
+            max-height: 1000px;
+            overflow: hidden;
+            transition: max-height 0.3s ease-out;
+        }
+
+        .collapsible-content.collapsed {
+            max-height: 0;
+        }
+
+        .grid-2-cols {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        @media (max-width: 1024px) {
+            .grid-2-cols {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 0.85em;
+            font-weight: 600;
+        }
+
+        .status-badge.open {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .status-badge.closed {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .buy-tabs {
+            display: flex;
+            border-bottom: 1px solid #dee2e6;
+            margin-bottom: 15px;
+        }
+
+        .tab-button {
+            padding: 10px 15px;
+            cursor: pointer;
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-bottom: none;
+            border-radius: 6px 6px 0 0;
+            margin-bottom: -1px;
+            margin-right: 5px;
+            font-size: 0.95em;
+            transition: all 0.3s;
+        }
+
+        .tab-button.active {
+            background: white;
+            border-bottom: 1px solid white;
+            font-weight: 600;
+            color: #667eea;
+        }
+
+        .tab-button:hover:not(.active) {
+            background: #e9ecef;
+        }
+
+        .tab-panel {
+            display: none;
+        }
+
+        .tab-panel.active {
+            display: block;
+        }
+
+        .slider-group {
+            display: grid;
+            grid-template-columns: 1fr 80px;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .slider-group input[type="range"] {
+            width: 100%;
+        }
+
+        .slider-group input[type="number"] {
+            width: 100%;
+        }
+
+        select {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #dee2e6;
+            border-radius: 6px;
+            font-size: 0.95em;
+            background: white;
+            cursor: pointer;
+        }
+
+        select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none !important;
+        }
+
+        .input-hint {
+            font-size: 0.85em;
+            color: #6c757d;
+            margin-top: 3px;
+        }
+
+        .grid-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+
+        .no-wrap {
+            white-space: nowrap;
+        }
+
+        @media (max-width: 1200px) {
+            .content {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>⚡ functionSPACE Trading Protocol</h1>
+            <p>High-Fidelity Cryptoeconomic Simulation Dashboard</p>
+        </div>
+
+        <div class="content">
+            <!-- Status Message -->
+            <div id="status-message" class="status info hidden">
+                Ready to create market
+            </div>
+
+            <!-- Market Information -->
+            <div class="section">
+                <h2>📊 Market Information</h2>
+                <div id="market-info" class="market-info">
+                    <div class="info-item" style="grid-column: 1 / -1;">
+                        <strong>Title</strong>
+                        <span id="info-title">-</span>
+                    </div>
+                    <div class="info-item">
+                        <strong>Status</strong>
+                        <span id="info-status">Not Initialized</span>
+                    </div>
+                    <div class="info-item">
+                        <strong>Positions</strong>
+                        <span id="info-positions">0</span>
+                    </div>
+                    <div class="info-item">
+                        <strong>Range</strong>
+                        <span id="info-range">-</span>
+                    </div>
+                    <div class="info-item">
+                        <strong>Total P</strong>
+                        <span id="info-total-p">-</span>
+                    </div>
+                    <div class="info-item">
+                        <strong>Current Pool</strong>
+                        <span id="info-current-pool">-</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Market Creation (Collapsible) -->
+            <div class="section">
+                <div class="collapsible-header" onclick="toggleCollapse('market-creation')">
+                    <h2>🏗️ Create Market</h2>
+                    <span class="collapse-icon collapsed" id="market-creation-icon">▼</span>
+                </div>
+                <div id="market-creation-content" class="collapsible-content collapsed">
+                    <div style="margin-top: 15px;">
+                        <div class="form-group">
+                            <label>Market Title</label>
+                            <input type="text" id="input-title" value="ETH Price 2025-12-31" placeholder="e.g., ETH Price 2025-12-31">
+                        </div>
+                        <div class="form-group">
+                            <label>L (Lower Bound)</label>
+                            <input type="number" id="input-L" value="0" step="any">
+                        </div>
+                        <div class="form-group">
+                            <label>H (Upper Bound)</label>
+                            <input type="number" id="input-H" value="100" step="any">
+                        </div>
+                        <div class="form-group">
+                            <label>K (Discretization Points)</label>
+                            <input type="number" id="input-K" value="10" step="1" min="1">
+                        </div>
+                        <div class="form-group">
+                            <label>P₀ (Initial Pseudocount)</label>
+                            <input type="number" id="input-P0" value="100" step="any" min="0.01">
+                        </div>
+                        <div class="form-group">
+                            <label>μ (Minting Ratio)</label>
+                            <input type="number" id="input-mu" value="1.0" step="any" min="0.01">
+                        </div>
+                        <div class="form-group">
+                            <label>ε_α (Alpha Floor)</label>
+                            <input type="number" id="input-eps" value="0.01" step="any" min="0.0001">
+                        </div>
+                        <button onclick="createMarket()" style="margin-bottom: 10px;">Create New Market (Overwrites Current)</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Probability Density Functions -->
+            <div class="section">
+                <h2>📈 Probability Density Functions</h2>
+                <div class="chart-container">
+                    <canvas id="pdf-chart"></canvas>
+                </div>
+            </div>
+
+            <!-- Buy and Settlement Side by Side -->
+            <div class="grid-2-cols">
+                <!-- Buy Position -->
+                <div class="section">
+                    <h2>💰 Buy Position</h2>
+                    <div class="buy-tabs">
+                        <button class="tab-button active" onclick="switchBuyTab('simple')">Simple</button>
+                        <button class="tab-button" onclick="switchBuyTab('moderate')">Moderate</button>
+                        <button class="tab-button" onclick="switchBuyTab('advanced')">Advanced</button>
+                    </div>
+
+                    <!-- Simple Tab -->
+                    <div id="buy-tab-simple" class="tab-panel active">
+                        <div class="form-group">
+                            <label>Collateral (C)</label>
+                            <input type="number" id="simple-C" value="10" step="any" min="0.01" oninput="updateBuyPreview()">
+                        </div>
+                        <div class="form-group">
+                            <label>Outcome (Mean)</label>
+                            <input type="number" id="simple-mean" value="50" step="any" oninput="updateBuyPreview()">
+                        </div>
+                        <div class="form-group">
+                            <label>Confidence</label>
+                            <select id="simple-confidence" onchange="updateBuyPreview()">
+                                <option value="10">Low (Broad)</option>
+                                <option value="5" selected>Medium</option>
+                                <option value="2">High (Narrow)</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Moderate Tab -->
+                    <div id="buy-tab-moderate" class="tab-panel">
+                        <div class="form-group">
+                            <label>Collateral (C)</label>
+                            <input type="number" id="moderate-C" value="10" step="any" min="0.01">
+                        </div>
+                        <div class="form-group">
+                            <label>Mean</label>
+                            <div class="slider-group">
+                                <input type="range" id="moderate-mean-slider" min="0" max="100" value="50" step="0.1" oninput="syncSliderInput('moderate-mean')">
+                                <input type="number" id="moderate-mean" value="50" step="any" oninput="syncInputSlider('moderate-mean')">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label>Std Dev</label>
+                            <div class="slider-group">
+                                <input type="range" id="moderate-std-slider" min="0.1" max="20" value="5" step="0.1" oninput="syncSliderInput('moderate-std')">
+                                <input type="number" id="moderate-std" value="5" step="any" min="0.01" oninput="syncInputSlider('moderate-std')">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Advanced Tab -->
+                    <div id="buy-tab-advanced" class="tab-panel">
+                        <div class="form-group">
+                            <label>Collateral (C)</label>
+                            <input type="number" id="advanced-C" value="10" step="any" min="0.01">
+                        </div>
+                        <div class="form-group">
+                            <label>Belief Vector (p)</label>
+                            <textarea id="advanced-p" placeholder="Enter comma-separated values that sum to 1&#10;Example: 0.1, 0.2, 0.3, 0.2, 0.1, 0.05, 0.05">0.09091, 0.09091, 0.09091, 0.09091, 0.09091, 0.09091, 0.09091, 0.09091, 0.09091, 0.09091, 0.09091</textarea>
+                            <div class="input-hint">Must sum to 1.0 (K+1 values)</div>
+                        </div>
+                    </div>
+
+                    <button id="buy-button" onclick="buyPosition()" style="margin-top: 15px;">Buy Position</button>
+                </div>
+
+                <!-- Settlement -->
+                <div class="section">
+                    <h2>🏁 Settlement</h2>
+                    <div class="form-group">
+                        <label>Final Outcome (x)</label>
+                        <input type="number" id="input-outcome" value="50" step="any">
+                    </div>
+                    <div class="grid-2">
+                        <button onclick="simulateSettlement()" class="secondary">Simulate</button>
+                        <button onclick="executeSettlement()" class="danger">Execute</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Positions Table -->
+            <div class="section">
+                <h2>📋 Positions</h2>
+                <button onclick="refreshPositions()" class="secondary small" style="margin-bottom: 10px;">🔄 Refresh</button>
+                <div style="overflow-x: auto;">
+                    <table id="positions-table">
+                        <thead>
+                            <tr>
+                                <th style="width: 40px;">☑</th>
+                                <th>ID</th>
+                                <th>Status</th>
+                                <th>Collateral (C)</th>
+                                <th>Claims (m)</th>
+                                <th>Current Value (t*)</th>
+                                <th>Sell Iterations</th>
+                                <th>Sold Price</th>
+                                <th>Settlement Payout</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="positions-tbody">
+                            <tr>
+                                <td colspan="10" style="text-align: center; color: #6c757d;">
+                                    No positions yet. Buy a position to get started.
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- State Management -->
+            <div class="section">
+                <h2>💾 State Management</h2>
+                <div class="form-group">
+                    <label>Filepath</label>
+                    <input type="text" id="input-filepath" value="market_state.json">
+                </div>
+                <div class="grid-2">
+                    <button onclick="saveState()" class="secondary">Save</button>
+                    <button onclick="loadState()" class="secondary">Load</button>
+                </div>
+            </div>
+
+            <div class="loading" id="loading">
+                <p>⏳ Loading...</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Global state
+        const API_BASE = 'http://localhost:8000';
+        let chart = null;
+        let marketParams = null;
+        let positionOverlays = new Set();
+        let currentBuyTab = 'simple';
+
+        // Initialize chart
+        function initChart() {
+            const ctx = document.getElementById('pdf-chart').getContext('2d');
+            chart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    datasets: []
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: true,
+                            position: 'top'
+                        },
+                        tooltip: {
+                            mode: 'index',
+                            intersect: false
+                        }
+                    },
+                    scales: {
+                        x: {
+                            type: 'linear',
+                            title: {
+                                display: true,
+                                text: 'Outcome (x)'
+                            }
+                        },
+                        y: {
+                            title: {
+                                display: true,
+                                text: 'Probability Density'
+                            },
+                            beginAtZero: true
+                        }
+                    },
+                    interaction: {
+                        mode: 'nearest',
+                        axis: 'x',
+                        intersect: false
+                    },
+                    elements: {
+                        line: {
+                            tension: 0.4,  // Enable smooth curves
+                            cubicInterpolationMode: 'monotone'  // Smooth cubic interpolation
+                        },
+                        point: {
+                            radius: 0  // Hide points for smoother appearance
+                        }
+                    }
+                }
+            });
+        }
+
+        // Toggle collapsible sections
+        function toggleCollapse(sectionId) {
+            const content = document.getElementById(`${sectionId}-content`);
+            const icon = document.getElementById(`${sectionId}-icon`);
+            
+            content.classList.toggle('collapsed');
+            icon.classList.toggle('collapsed');
+        }
+
+        // Status message helper
+        function showStatus(message, type = 'info') {
+            const statusEl = document.getElementById('status-message');
+            statusEl.textContent = message;
+            statusEl.className = `status ${type}`;
+            statusEl.classList.remove('hidden');
+            
+            if (type === 'success' || type === 'error') {
+                setTimeout(() => statusEl.classList.add('hidden'), 5000);
+            }
+        }
+
+        // API call wrapper
+        async function apiCall(endpoint, method = 'GET', body = null) {
+            try {
+                const options = {
+                    method,
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                };
+                
+                if (body) {
+                    options.body = JSON.stringify(body);
+                }
+                
+                const response = await fetch(`${API_BASE}${endpoint}`, options);
+                const data = await response.json();
+                
+                if (!response.ok) {
+                    throw new Error(data.detail || 'API call failed');
+                }
+                
+                return data;
+            } catch (error) {
+                showStatus(`Error: ${error.message}`, 'error');
+                throw error;
+            }
+        }
+
+        // Create market
+        async function createMarket() {
+            const L = parseFloat(document.getElementById('input-L').value);
+            const H = parseFloat(document.getElementById('input-H').value);
+            const K = parseInt(document.getElementById('input-K').value);
+            const P0 = parseFloat(document.getElementById('input-P0').value);
+            const mu = parseFloat(document.getElementById('input-mu').value);
+            const eps_alpha = parseFloat(document.getElementById('input-eps').value);
+            const title = document.getElementById('input-title').value;
+
+            try {
+                const result = await apiCall('/market/create', 'POST', {
+                    L, H, K, P0, mu, eps_alpha, title, overwrite: true
+                });
+                
+                showStatus('Market created successfully!', 'success');
+                marketParams = result.params;
+                
+                // Update moderate tab sliders with market bounds
+                const meanSlider = document.getElementById('moderate-mean-slider');
+                const meanInput = document.getElementById('moderate-mean');
+                meanSlider.min = L;
+                meanSlider.max = H;
+                meanSlider.value = (L + H) / 2;
+                meanInput.value = (L + H) / 2;
+                
+                // Update simple tab mean bounds
+                const simpleMean = document.getElementById('simple-mean');
+                simpleMean.min = L;
+                simpleMean.max = H;
+                simpleMean.value = (L + H) / 2;
+                
+                await refreshMarketInfo();
+                await updateConsensusPDF();
+            } catch (error) {
+                console.error('Create market failed:', error);
+            }
+        }
+
+        // Tab switching
+        function switchBuyTab(tabName) {
+            currentBuyTab = tabName;
+            
+            // Hide all panels
+            document.querySelectorAll('.tab-panel').forEach(panel => {
+                panel.classList.remove('active');
+            });
+            
+            // Remove active from all buttons
+            document.querySelectorAll('.tab-button').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            
+            // Show selected panel
+            document.getElementById(`buy-tab-${tabName}`).classList.add('active');
+            
+            // Activate clicked button
+            event.target.classList.add('active');
+            
+            // Update preview if simple or moderate
+            if (tabName === 'simple' || tabName === 'moderate') {
+                updateBuyPreview();
+            } else {
+                // Clear preview for advanced
+                clearTradePreview();
+            }
+        }
+
+        // Gaussian PDF helper
+        function gaussianPdf(x, mean, stdDev) {
+            const coefficient = 1 / (stdDev * Math.sqrt(2 * Math.PI));
+            const exponent = -Math.pow(x - mean, 2) / (2 * Math.pow(stdDev, 2));
+            return coefficient * Math.exp(exponent);
+        }
+
+        // Generate normalized p_vector from normal distribution (JS mirror)
+        function js_generate_p_from_normal(mean, stdDev) {
+            if (!marketParams) return null;
+            
+            const L = marketParams.L;
+            const H = marketParams.H;
+            const K = marketParams.K;
+            
+            const x_points = [];
+            for (let i = 0; i <= K; i++) {
+                x_points.push(L + (H - L) * i / K);
+            }
+            
+            // Edge case: near-zero std_dev
+            if (stdDev < 1e-6) {
+                const p_vector = new Array(K + 1).fill(0);
+                let closestIdx = 0;
+                let minDist = Math.abs(x_points[0] - mean);
+                for (let i = 1; i <= K; i++) {
+                    const dist = Math.abs(x_points[i] - mean);
+                    if (dist < minDist) {
+                        minDist = dist;
+                        closestIdx = i;
+                    }
+                }
+                p_vector[closestIdx] = 1.0;
+                return p_vector;
+            }
+            
+            // Standard case: evaluate PDF
+            const densities = x_points.map(x => gaussianPdf(x, mean, stdDev));
+            const total = densities.reduce((a, b) => a + b, 0);
+            
+            if (total === 0) {
+                return new Array(K + 1).fill(1.0 / (K + 1));
+            }
+            
+            return densities.map(d => d / total);
+        }
+
+        // Update buy preview
+        function updateBuyPreview() {
+            if (!marketParams) return;
+            
+            let mean, stdDev;
+            
+            if (currentBuyTab === 'simple') {
+                mean = parseFloat(document.getElementById('simple-mean').value);
+                stdDev = parseFloat(document.getElementById('simple-confidence').value);
+            } else if (currentBuyTab === 'moderate') {
+                mean = parseFloat(document.getElementById('moderate-mean').value);
+                stdDev = parseFloat(document.getElementById('moderate-std').value);
+            } else {
+                return;
+            }
+            
+            // Validate
+            const L = marketParams.L;
+            const H = marketParams.H;
+            
+            const buyButton = document.getElementById('buy-button');
+            
+            if (isNaN(mean) || isNaN(stdDev) || stdDev <= 0 || mean < L || mean > H) {
+                buyButton.disabled = true;
+                clearTradePreview();
+                return;
+            }
+            
+            buyButton.disabled = false;
+            
+            // Generate p_vector
+            const p_vector = js_generate_p_from_normal(mean, stdDev);
+            if (!p_vector) return;
+            
+            // Convert to plottable data
+            const x_points = [];
+            for (let i = 0; i <= marketParams.K; i++) {
+                x_points.push(L + (H - L) * i / marketParams.K);
+            }
+            
+            const delta_x = (H - L) / marketParams.K;
+            const densities = p_vector.map(p => p / delta_x);
+            
+            // Create dataset
+            const chartData = x_points.map((x, i) => ({ x, y: densities[i] }));
+            
+            // Find or create preview dataset
+            let previewDataset = chart.data.datasets.find(ds => ds.label === 'Trade Preview');
+            
+            if (!previewDataset) {
+                chart.data.datasets.push({
+                    label: 'Trade Preview',
+                    data: chartData,
+                    borderColor: 'rgb(255, 193, 7)',
+                    backgroundColor: 'rgba(255, 193, 7, 0.1)',
+                    borderWidth: 2,
+                    pointRadius: 0,
+                    fill: true,
+                    borderDash: [10, 5],
+                    tension: 0.4,
+                    cubicInterpolationMode: 'monotone'
+                });
+            } else {
+                previewDataset.data = chartData;
+            }
+            
+            chart.update('none');
+        }
+
+        // Clear trade preview
+        function clearTradePreview() {
+            const index = chart.data.datasets.findIndex(ds => ds.label === 'Trade Preview');
+            if (index !== -1) {
+                chart.data.datasets.splice(index, 1);
+                chart.update('none');
+            }
+        }
+
+        // Sync slider and input
+        function syncSliderInput(baseId) {
+            const slider = document.getElementById(`${baseId}-slider`);
+            const input = document.getElementById(baseId);
+            input.value = slider.value;
+            updateBuyPreview();
+        }
+
+        function syncInputSlider(baseId) {
+            const slider = document.getElementById(`${baseId}-slider`);
+            const input = document.getElementById(baseId);
+            const val = parseFloat(input.value);
+            
+            if (!isNaN(val)) {
+                const min = parseFloat(slider.min);
+                const max = parseFloat(slider.max);
+                slider.value = Math.max(min, Math.min(max, val));
+            }
+            
+            updateBuyPreview();
+        }
+
+        // Buy position (refactored for tabs)
+        async function buyPosition() {
+            let C, endpoint, body;
+            
+            if (currentBuyTab === 'advanced') {
+                // Advanced: use manual p_vector
+                C = parseFloat(document.getElementById('advanced-C').value);
+                const pStr = document.getElementById('advanced-p').value;
+                const p_vector = pStr.split(',').map(v => parseFloat(v.trim()));
+                
+                endpoint = '/market/buy';
+                body = { C, p_vector };
+            } else if (currentBuyTab === 'simple') {
+                // Simple: use mean and confidence
+                C = parseFloat(document.getElementById('simple-C').value);
+                const mean = parseFloat(document.getElementById('simple-mean').value);
+                const std_dev = parseFloat(document.getElementById('simple-confidence').value);
+                
+                endpoint = '/market/buy_with_params';
+                body = { C, mean, std_dev };
+            } else if (currentBuyTab === 'moderate') {
+                // Moderate: use mean and std_dev
+                C = parseFloat(document.getElementById('moderate-C').value);
+                const mean = parseFloat(document.getElementById('moderate-mean').value);
+                const std_dev = parseFloat(document.getElementById('moderate-std').value);
+                
+                endpoint = '/market/buy_with_params';
+                body = { C, mean, std_dev };
+            }
+
+            try {
+                const result = await apiCall(endpoint, 'POST', body);
+                
+                showStatus(`Position ${result.position.position_id} created!`, 'success');
+                clearTradePreview();
+                await refreshMarketInfo();
+                await updateConsensusPDF();
+                await refreshPositions();
+            } catch (error) {
+                console.error('Buy position failed:', error);
+            }
+        }
+
+        // Simulate sell
+        async function simulateSell(positionId) {
+            try {
+                const result = await apiCall(`/sell/simulate/${positionId}`);
+                return result; // Now returns {current_value_t_star, iterations}
+            } catch (error) {
+                console.error('Simulate sell failed:', error);
+                return null;
+            }
+        }
+
+        // Execute sell
+        async function executeSell(positionId) {
+            if (!confirm(`Are you sure you want to sell position ${positionId}?`)) {
+                return;
+            }
+
+            try {
+                const result = await apiCall(`/sell/execute/${positionId}`, 'POST');
+                showStatus(`Position sold for ${result.collateral_paid_t_star.toFixed(6)} collateral`, 'success');
+                
+                // Remove overlay if active
+                positionOverlays.delete(positionId);
+                
+                await refreshMarketInfo();
+                await updateConsensusPDF();
+                await refreshPositions();
+            } catch (error) {
+                console.error('Execute sell failed:', error);
+            }
+        }
+
+        // Simulate settlement
+        async function simulateSettlement() {
+            const outcome_x = parseFloat(document.getElementById('input-outcome').value);
+
+            try {
+                const result = await apiCall(`/settle/simulate?outcome_x=${outcome_x}`);
+                showStatus(`Settlement simulated at x=${outcome_x}: Total payout = ${result.total_payout.toFixed(6)}`, 'info');
+                
+                // Update positions table with payouts
+                const payouts = result.payout_map;
+                for (const [posId, payout] of Object.entries(payouts)) {
+                    const cell = document.querySelector(`#payout-${posId}`);
+                    if (cell) {
+                        // Closed positions return null/None - display as N/A
+                        cell.textContent = payout === null ? 'N/A' : payout.toFixed(6);
+                    }
+                }
+            } catch (error) {
+                console.error('Simulate settlement failed:', error);
+            }
+        }
+
+        // Execute settlement
+        async function executeSettlement() {
+            const outcome_x = parseFloat(document.getElementById('input-outcome').value);
+
+            if (!confirm(`Are you sure you want to execute settlement at outcome x=${outcome_x}? This will FREEZE the market.`)) {
+                return;
+            }
+
+            try {
+                const result = await apiCall('/settle/execute', 'POST', { outcome_x });
+                showStatus(`Market settled at x=${outcome_x}. Total payout: ${result.total_payout.toFixed(6)}`, 'success');
+                
+                await refreshMarketInfo();
+                await refreshPositions();
+            } catch (error) {
+                console.error('Execute settlement failed:', error);
+            }
+        }
+
+        // Save state
+        async function saveState() {
+            const filepath = document.getElementById('input-filepath').value;
+
+            try {
+                await apiCall('/state/save', 'POST', { filepath });
+                showStatus(`State saved to ${filepath}`, 'success');
+            } catch (error) {
+                console.error('Save state failed:', error);
+            }
+        }
+
+        // Load state
+        async function loadState() {
+            const filepath = document.getElementById('input-filepath').value;
+
+            try {
+                const result = await apiCall('/state/load', 'POST', { filepath });
+                showStatus(`State loaded from ${filepath}`, 'success');
+                
+                marketParams = result.market_params;
+                await refreshMarketInfo();
+                await updateConsensusPDF();
+                await refreshPositions();
+            } catch (error) {
+                console.error('Load state failed:', error);
+            }
+        }
+
+        // Refresh market info
+        async function refreshMarketInfo() {
+            try {
+                const state = await apiCall('/market/state');
+                
+                document.getElementById('info-title').textContent = state.title || '-';
+                document.getElementById('info-status').textContent = 
+                    state.is_settled ? 'Settled ✓' : 'Active';
+                document.getElementById('info-positions').textContent = state.num_positions;
+                
+                if (state.market_params) {
+                    const { L, H, K, P0 } = state.market_params;
+                    document.getElementById('info-range').textContent = `[${L}, ${H}] (K=${K})`;
+                    
+                    const totalP = state.alpha_vector.reduce((a, b) => a + b, 0);
+                    document.getElementById('info-total-p').textContent = totalP.toFixed(2);
+                    
+                    document.getElementById('info-current-pool').textContent = 
+                        state.current_pool ? state.current_pool.toFixed(2) : '0.00';
+                }
+            } catch (error) {
+                console.error('Refresh market info failed:', error);
+            }
+        }
+
+        // Update consensus PDF
+        async function updateConsensusPDF() {
+            try {
+                const data = await apiCall('/market/consensus_pdf?num_points=500');
+                
+                // Clear and rebuild datasets
+                chart.data.datasets = [{
+                    label: 'Public Consensus',
+                    data: data.x_values.map((x, i) => ({ x, y: data.y_values[i] })),
+                    borderColor: 'rgb(102, 126, 234)',
+                    backgroundColor: 'rgba(102, 126, 234, 0.1)',
+                    borderWidth: 3,
+                    pointRadius: 0,
+                    fill: true,
+                    tension: 0.4,
+                    cubicInterpolationMode: 'monotone'
+                }];
+                
+                // Re-add active position overlays
+                for (const posId of positionOverlays) {
+                    await addPositionOverlay(posId, false);
+                }
+                
+                chart.update();
+            } catch (error) {
+                console.error('Update consensus PDF failed:', error);
+            }
+        }
+
+        // Add position overlay to chart
+        async function addPositionOverlay(positionId, updateChart = true) {
+            try {
+                const data = await apiCall(`/position/pdf/${positionId}?num_points=500`);
+                
+                // Generate random color
+                const hue = Math.floor(Math.random() * 360);
+                const color = `hsl(${hue}, 70%, 50%)`;
+                
+                chart.data.datasets.push({
+                    label: `Position ${positionId}`,
+                    data: data.x_values.map((x, i) => ({ x, y: data.y_values[i] })),
+                    borderColor: color,
+                    backgroundColor: `hsla(${hue}, 70%, 50%, 0.1)`,
+                    borderWidth: 2,
+                    pointRadius: 0,
+                    fill: false,
+                    borderDash: [5, 5],
+                    tension: 0.4,
+                    cubicInterpolationMode: 'monotone'
+                });
+                
+                if (updateChart) {
+                    chart.update();
+                }
+            } catch (error) {
+                console.error('Add position overlay failed:', error);
+            }
+        }
+
+        // Remove position overlay from chart
+        function removePositionOverlay(positionId) {
+            const index = chart.data.datasets.findIndex(ds => ds.label === `Position ${positionId}`);
+            if (index !== -1) {
+                chart.data.datasets.splice(index, 1);
+                chart.update();
+            }
+        }
+
+        // Toggle position overlay
+        async function togglePositionOverlay(checkbox, positionId) {
+            if (checkbox.checked) {
+                positionOverlays.add(positionId);
+                await addPositionOverlay(positionId);
+            } else {
+                positionOverlays.delete(positionId);
+                removePositionOverlay(positionId);
+            }
+        }
+
+        // Refresh positions table
+        async function refreshPositions() {
+            try {
+                const result = await apiCall('/market/positions');
+                const tbody = document.getElementById('positions-tbody');
+                
+                if (result.positions.length === 0) {
+                    tbody.innerHTML = `
+                        <tr>
+                            <td colspan="10" style="text-align: center; color: #6c757d;">
+                                No positions yet. Buy a position to get started.
+                            </td>
+                        </tr>
+                    `;
+                    return;
+                }
+                
+                // Fetch current values for open positions only
+                const positionsWithValues = await Promise.all(
+                    result.positions.map(async (pos) => {
+                        // Only try to get current value if position is open
+                        if (pos.status === 'open') {
+                            try {
+                                const sellResult = await simulateSell(pos.position_id);
+                                return { 
+                                    ...pos, 
+                                    current_value_t_star: sellResult ? sellResult.current_value_t_star : null,
+                                    iterations: sellResult ? sellResult.iterations : null
+                                };
+                            } catch {
+                                return { ...pos, current_value_t_star: null, iterations: null };
+                            }
+                        } else {
+                            // Position is closed, don't simulate
+                            return { ...pos, current_value_t_star: null, iterations: null };
+                        }
+                    })
+                );
+                
+                tbody.innerHTML = positionsWithValues.map(pos => {
+                    const isOpen = pos.status === 'open';
+                    return `
+                        <tr>
+                            <td>
+                                <input type="checkbox" 
+                                       ${positionOverlays.has(pos.position_id) ? 'checked' : ''}
+                                       onchange="togglePositionOverlay(this, '${pos.position_id}')">
+                            </td>
+                            <td class="no-wrap">${pos.position_id}</td>
+                            <td><span class="status-badge ${pos.status}">${pos.status}</span></td>
+                            <td>${pos.input_collateral_C.toFixed(4)}</td>
+                            <td>${pos.minted_claims_m.toFixed(6)}</td>
+                            <td>${isOpen && pos.current_value_t_star !== null ? pos.current_value_t_star.toFixed(6) : '-'}</td>
+                            <td>${isOpen && pos.iterations !== null ? pos.iterations : '-'}</td>
+                            <td>${pos.sold_price !== null ? pos.sold_price.toFixed(6) : '-'}</td>
+                            <td id="payout-${pos.position_id}">-</td>
+                            <td>
+                                ${isOpen ? `<button class="danger small" onclick="executeSell('${pos.position_id}')">Sell</button>` : '-'}
+                            </td>
+                        </tr>
+                    `;
+                }).join('');
+            } catch (error) {
+                console.error('Refresh positions failed:', error);
+            }
+        }
+
+        // Initialize on page load
+        window.addEventListener('DOMContentLoaded', () => {
+            initChart();
+            showStatus('Dashboard ready. Create a market to begin.', 'info');
+        });
+    </script>
+</body>
+</html>
